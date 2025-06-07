@@ -59,7 +59,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__, template_folder="templates")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://sdv_user:sdv_password_2024@localhost/sdv_toolbox'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sdv_toolbox.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'sdv-toolbox-secret-key-2024'
 
