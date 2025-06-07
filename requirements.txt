@@ -1,1 +1,45 @@
-flask
+SDV Toolbox - Requirements
+Installation : pip3 install -r requirements.txt
+Framework Web
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.2
+Werkzeug==2.3.7
+
+Base de données (SQLite inclus par défaut avec Python)
+Plus besoin de PyMySQL avec SQLite !
+Génération de rapports PDF
+reportlab==4.0.4
+
+Parsing HTML et requêtes web
+beautifulsoup4==4.12.2
+requests==2.31.0
+lxml==4.9.3
+
+Utilitaires système
+psutil==5.9.5
+
+Cryptographie et hachage
+bcrypt==4.0.1
+cryptography==41.0.3
+
+Gestion des dates
+python-dateutil==2.8.2
+
+Parser et validation
+validators==0.20.0
+
+Gestion des fichiers
+python-magic==0.4.27
+
+Interface de ligne de commande (pour les outils)
+click==8.1.7
+
+Sérialisation JSON avancée
+jsonschema==4.19.0
+
+Gestion des logs avancée
+colorlog==6.7.0
+
+Gestion des variables d'environnement
+python-dotenv==1.0.0
