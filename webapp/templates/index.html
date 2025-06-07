@@ -3,68 +3,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SDV Toolbox - Scanner Réseau</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <title>SDV Toolbox - Dashboard</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
         body {
-            background-color: #121212;
+            background: #1a1a1a;
             color: #ffffff;
+            min-height: 100vh;
         }
-        .container {
-            max-width: 600px;
-            margin-top: 50px;
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+
+        /* Header avec info utilisateur */
+        .header {
+            background: rgba(42, 42, 42, 0.95);
+            border-bottom: 1px solid #333;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        h1 {
-            color: #0d6efd;
+
+        .logo-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        .btn-primary {
-            width: 100%;
-            font-size: 18px;
+
+        .logo-header h1 {
+            background: linear-gradient(45deg, #007bff, #28a745);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 1.8rem;
         }
-        .btn-secondary {
-            width: 100%;
-            font-size: 18px;
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
-        .results {
-            background-color: #252525;
-            padding: 15px;
+
+        .user-badge {
+            background: rgba(0, 123, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            font-size: 0.9rem;
+        }
+
+        .btn-logout {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #fff;
+            padding: 0.5rem 1rem;
             border-radius: 8px;
-            margin-top: 20px;
-            white-space: pre-wrap;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .btn-logout:hover {
+            background: rgba(220, 53, 69, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Container principal */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #007bff, #28a745, #ffc107);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: #aaa;
+            font-size: 1.1rem;
+        }
+
+        /* Sections d'outils */
+        .tools-section {
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid;
+            display: inline-block;
+        }
+
+        .section-title.security {
+            color: #007bff;
+            border-color: #007bff;
+        }
+
+        .section-title.development {
+            color: #28a745;
+            border-color: #28a745;
+        }
+
+        .section-title.infrastructure {
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .section-title.support {
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        .section-title.rh {
+            color: #6f42c1;
+            border-color: #6f42c1;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .tool-card {
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .tool-card:hover::before {
+            left: 100%;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: #666;
+        }
+
+        /* Couleurs spécifiques par section */
+        .tool-card.security:hover {
+            border-color: #007bff;
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.2);
+        }
+
+        .tool-card.development:hover {
+            border-color: #28a745;
+            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.2);
+        }
+
+        .tool-card.infrastructure:hover {
+            border-color: #ffc107;
+            box-shadow: 0 10px 25px rgba(255, 193, 7, 0.2);
+        }
+
+        .tool-card.support:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 10px 25px rgba(23, 162, 184, 0.2);
+        }
+
+        .tool-card.rh:hover {
+            border-color: #6f42c1;
+            box-shadow: 0 10px 25px rgba(111, 66, 193, 0.2);
+        }
+
+        .tool-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .tool-description {
+            color: #aaa;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        /* Stats en bas */
+        .stats-section {
+            background: rgba(42, 42, 42, 0.5);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-item {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+            display: block;
+        }
+
+        .stat-label {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container text-center">
-        <h1><i class="bi bi-shield-lock-fill"></i> SDV Toolbox</h1>
-        <p class="text-muted">Scanner Réseau avec Nmap</p>
-
-        <!-- Formulaire pour entrer l'IP -->
-        <form action="/scan" method="GET" class="mt-3">
-            <div class="mb-3">
-                <label for="target" class="form-label">Entrez une IP :</label>
-                <input type="text" id="target" name="target" class="form-control text-center" placeholder="192.168.1.1" required>
-            </div>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-search"></i> Lancer le Scan
-            </button>
-        </form>
-
-        <!-- Bouton pour accéder à la page Nikto -->
-        <a href="/nikto" class="btn btn-secondary mt-3"><i class="bi bi-globe"></i> Scanner un Site Web (Nikto)</a>
-
-        <!-- Affichage des résultats du scan Nmap -->
-        {% if results %}
-        <div class="results">
-            <h4><i class="bi bi-terminal"></i> Résultats du Scan :</h4>
-            <pre>{{ results }}</pre>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo-header">
+            <h1>🛡️ SDV Toolbox</h1>
         </div>
-        {% endif %}
+        <div class="user-info">
+            <div class="user-badge">
+                👤 {{ session.get('username', 'Utilisateur') }} - {{ session.get('role', 'User') }}
+            </div>
+            <a href="/logout" class="btn-logout">🚪 Déconnexion</a>
+        </div>
     </div>
+
+    <div class="container">
+        <!-- Section de bienvenue -->
+        <div class="welcome-section">
+            <h1 class="welcome-title">Bienvenue dans SDV Toolbox</h1>
+            <p class="welcome-subtitle">Votre suite d'outils de sécurité et de développement</p>
+        </div>
+
+        <!-- Sécurité (SOC, EDR, XDR) -->
+        <div class="tools-section">
+            <h2 class="section-title security">🔒 Sécurité (SOC, EDR, XDR)</h2>
+            <div class="tools-grid">
+                <div class="tool-card security" onclick="window.location.href='/nmap'">
+                    <div class="tool-name">Nmap</div>
+                    <div class="tool-description">Scanner de ports et découverte réseau avancée</div>
+                </div>
+                <div class="tool-card security" onclick="window.location.href='/metasploit'">
+                    <div class="tool-name">Metasploit</div>
+                    <div class="tool-description">Framework de test de pénétration et exploitation</div>
+                </div>
+                <div class="tool-card security" onclick="window.location.href='/wireshark'">
+                    <div class="tool-name">Wireshark</div>
+                    <div class="tool-description">Analyseur de protocoles réseau en temps réel</div>
+                </div>
+                <div class="tool-card security" onclick="window.location.href='/zap'">
+                    <div class="tool-name">OWASP ZAP</div>
+                    <div class="tool-description">Scanner de vulnérabilités d'applications web</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Développement -->
+        <div class="tools-section">
+            <h2 class="section-title development">💻 Développement</h2>
+            <div class="tools-grid">
+                <div class="tool-card development" onclick="window.location.href='/burpsuite'">
+                    <div class="tool-name">Burp Suite</div>
+                    <div class="tool-description">Plateforme de test de sécurité des applications web</div>
+                </div>
+                <div class="tool-card development" onclick="window.location.href='/postman'">
+                    <div class="tool-name">Postman</div>
+                    <div class="tool-description">Outil de test et développement d'API</div>
+                </div>
+                <div class="tool-card development" onclick="window.location.href='/sqlmap'">
+                    <div class="tool-name">SQLmap</div>
+                    <div class="tool-description">Outil d'automatisation pour détecter et exploiter les injections SQL</div>
+                </div>
+                <div class="tool-card development" onclick="window.location.href='/amass'">
+                    <div class="tool-name">OWASP</div>
+                    <div class="tool-description">Ressources et guides de sécurité applicative</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Infrastructure -->
+        <div class="tools-section">
+            <h2 class="section-title infrastructure">🏗️ Infrastructure</h2>
+            <div class="tools-grid">
+                <div class="tool-card infrastructure" onclick="window.location.href='/sslcheck'">
+                    <div class="tool-name">SSL Check</div>
+                    <div class="tool-description">Vérification et analyse des certificats SSL/TLS</div>
+                </div>
+                <div class="tool-card infrastructure" onclick="window.location.href='/wapiti'">
+                    <div class="tool-name">Wapiti</div>
+                    <div class="tool-description">Scanner de vulnérabilités d'applications web</div>
+                </div>
+                <div class="tool-card infrastructure" onclick="window.location.href='/hydra'">
+                    <div class="tool-name">Hydra</div>
+                    <div class="tool-description">Outil de force brute pour services réseau</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Client & Assistance -->
+        <div class="tools-section">
+            <h2 class="section-title support">🛠️ Support Client & Assistance</h2>
+            <div class="tools-grid">
+                <div class="tool-card support" onclick="window.location.href='/nikto'">
+                    <div class="tool-name">Nikto</div>
+                    <div class="tool-description">Scanner de vulnérabilités de serveurs web</div>
+                </div>
+                <div class="tool-card support" onclick="window.location.href='/sslyze'">
+                    <div class="tool-name">SSLyze</div>
+                    <div class="tool-description">Analyseur de configuration SSL/TLS</div>
+                </div>
+                <div class="tool-card support" onclick="window.location.href='/ettercap'">
+                    <div class="tool-name">Ettercap</div>
+                    <div class="tool-description">Suite complète pour les attaques man-in-the-middle</div>
+                </div>
+                <div class="tool-card support" onclick="window.location.href='/theharvester'">
+                    <div class="tool-name">The Harvester</div>
+                    <div class="tool-description">Collecte d'informations OSINT</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RH & Administration -->
+        <div class="tools-section">
+            <h2 class="section-title rh">👥 RH & Administration</h2>
+            <div class="tools-grid">
+                <div class="tool-card rh" onclick="window.location.href='/john'">
+                    <div class="tool-name">John the Ripper</div>
+                    <div class="tool-description">Outil de craquage de mots de passe</div>
+                </div>
+                <div class="tool-card rh" onclick="window.location.href='/acunetix'">
+                    <div class="tool-name">Acunetix</div>
+                    <div class="tool-description">Scanner de vulnérabilités d'applications web</div>
+                </div>
+                <div class="tool-card rh" onclick="window.location.href='/nmap_nse'">
+                    <div class="tool-name">Nmap Scripting Engine</div>
+                    <div class="tool-description">Scripts avancés pour Nmap</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="stats-section">
+            <h2 style="margin-bottom: 2rem; color: #007bff;">📊 Statistiques de la Toolbox</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">19</span>
+                    <span class="stat-label">Outils disponibles</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">5</span>
+                    <span class="stat-label">Catégories</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ session.get('login_count', 1) }}</span>
+                    <span class="stat-label">Connexions</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Sécurisé</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Animation d'entrée des cartes
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.tool-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Confirmation de déconnexion
+        document.querySelector('.btn-logout').addEventListener('click', function(e) {
+            if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>

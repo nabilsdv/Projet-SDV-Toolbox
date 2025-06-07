@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>🧪 Testeur API</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body { background-color: #121212; color: #fff; }
+    .container { max-width: 800px; margin-top: 50px; background-color: #1f1f1f; padding: 30px; border-radius: 10px; }
+    .form-control, .form-select { background-color: #2c2c2c; color: #fff; border: 1px solid #555; }
+    textarea.form-control { height: 150px; }
+    .result-box { background-color: #d1f5e3; color: #0f5132; padding: 20px; border-radius: 10px; margin-top: 20px; }
+    .error-box { background-color: #f8d7da; color: #842029; padding: 20px; border-radius: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="text-info mb-4">🧪 Testeur API</h2>
+    <form method="post">
+      <div class="mb-3">
+        <label for="url" class="form-label">URL</label>
+        <input type="text" id="url" name="url" placeholder="ex: https://api.example.com" class="form-control" value="{{ url or '' }}" required>
+      </div>
+      <div class="mb-3">
+        <label for="method" class="form-label">Méthode</label>
+        <select id="method" name="method" class="form-select">
+          <option value="GET" {% if method == 'GET' %}selected{% endif %}>GET</option>
+          <option value="POST" {% if method == 'POST' %}selected{% endif %}>POST</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label for="payload" class="form-label">Corps de requête (POST uniquement)</label>
+        <textarea id="payload" name="payload" class="form-control" placeholder='{"key":"value"}'>{{ payload or '' }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">🚀 Envoyer la requête</button>
+    </form>
+    
+    {% if error %}
+      <div class="error-box mt-4"><strong>{{ error }}</strong></div>
+    {% endif %}
+    
+    {% if response %}
+      <div class="result-box">
+        <h5>✅ Réponse de l'API</h5>
+        <p><strong>Status :</strong> {{ response.status_code }}</p>
+        <hr>
+        <h6>🔧 En-têtes :</h6>
+        <pre>{{ response.headers | tojson(indent=2) }}</pre>
+        <h6>📦 Corps :</h6>
+        <pre>{{ response.body }}</pre>
+      </div>
+      
+      <!-- BOUTON PDF -->
+      <div class="mt-4">
+        <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+          <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport API</h5>
+          <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de ce test d'API</p>
+          
+          <form action="{{ url_for('postman_ui') }}" method="post">
+            <input type="hidden" name="url" value="{{ url or '' }}">
+            <input type="hidden" name="method" value="{{ method or 'GET' }}">
+            <input type="hidden" name="payload" value="{{ payload or '' }}">
+            <input type="hidden" name="generate_pdf" value="1">
+            
+            <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold;">
+              📄 Télécharger le rapport PDF
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+        ⬅ Retour au menu
+    </a>
+  </div>
+</body>
+</html>

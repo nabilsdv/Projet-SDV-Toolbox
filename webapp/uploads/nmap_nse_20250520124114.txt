@@ -1,0 +1,4 @@
+# Nmap 7.94SVN scan initiated Tue May 20 12:41:14 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250520124114.txt https://www.isrp.fr
+Unable to split netmask from target expression: "https://www.isrp.fr"
+WARNING: No targets were specified, so 0 hosts scanned.
+# Nmap done at Tue May 20 12:41:14 2025 -- 0 IP addresses (0 hosts up) scanned in 0.09 seconds

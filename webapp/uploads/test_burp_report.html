@@ -1,0 +1,24 @@
+
+<html>
+  <head><title>Burp Suite Scan Report</title></head>
+  <body>
+    <issues>
+      <issue>
+        <name>Cross-site scripting (reflected)</name>
+        <severity>High</severity>
+        <host>testphp.vulnweb.com</host>
+        <path>/index.php?cat=1</path>
+        <issueBackground>This issue occurs when...</issueBackground>
+        <remediationBackground>Sanitize user input using HTML entity encoding...</remediationBackground>
+      </issue>
+      <issue>
+        <name>Information Disclosure - Debug Messages</name>
+        <severity>Low</severity>
+        <host>testphp.vulnweb.com</host>
+        <path>/debug.php</path>
+        <issueBackground>Debug messages were found...</issueBackground>
+        <remediationBackground>Remove debug messages before deploying to production.</remediationBackground>
+      </issue>
+    </issues>
+  </body>
+</html>

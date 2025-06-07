@@ -1,0 +1,4 @@
+# Nmap 7.94SVN scan initiated Tue May 20 12:44:43 2025 as: /usr/lib/nmap/nmap -sV --script smb-os-discovery -oN uploads/nmap_nse_20250520124443.txt http://testphp.vulnweb.com
+Unable to split netmask from target expression: "http://testphp.vulnweb.com"
+WARNING: No targets were specified, so 0 hosts scanned.
+# Nmap done at Tue May 20 12:44:43 2025 -- 0 IP addresses (0 hosts up) scanned in 0.09 seconds

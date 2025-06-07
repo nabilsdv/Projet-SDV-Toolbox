@@ -1,0 +1,12 @@
+# Nmap 7.94SVN scan initiated Fri May 30 16:57:23 2025 as: /usr/lib/nmap/nmap -sV --script http-enum -oN uploads/nmap_nse_20250530165723.txt httpbin.org
+Nmap scan report for httpbin.org (50.16.79.29)
+Host is up (0.014s latency).
+Other addresses for httpbin.org (not scanned): 54.166.245.7
+rDNS record for 50.16.79.29: ec2-50-16-79-29.compute-1.amazonaws.com
+Not shown: 998 filtered tcp ports (no-response)
+PORT    STATE SERVICE    VERSION
+80/tcp  open  tcpwrapped
+443/tcp open  tcpwrapped
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Fri May 30 16:57:50 2025 -- 1 IP address (1 host up) scanned in 27.16 seconds

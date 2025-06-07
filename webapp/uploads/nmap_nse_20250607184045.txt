@@ -1,0 +1,12 @@
+# Nmap 7.94SVN scan initiated Sat Jun  7 18:40:46 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250607184045.txt google.com
+Nmap scan report for google.com (142.250.75.238)
+Host is up (0.0014s latency).
+Other addresses for google.com (not scanned): 2a00:1450:4007:805::200e
+rDNS record for 142.250.75.238: par10s41-in-f14.1e100.net
+Not shown: 998 filtered tcp ports (no-response)
+PORT    STATE SERVICE    VERSION
+80/tcp  open  tcpwrapped
+443/tcp open  tcpwrapped
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sat Jun  7 18:41:09 2025 -- 1 IP address (1 host up) scanned in 23.73 seconds

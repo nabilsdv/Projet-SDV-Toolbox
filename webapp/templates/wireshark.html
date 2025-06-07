@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Wireshark</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            max-width: 900px;
+            margin-top: 50px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            color: #0d6efd;
+        }
+        table {
+            margin-top: 20px;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        thead th {
+            background-color: #222;
+            text-align: center;
+        }
+        tbody td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .protocol-TCP {
+            background-color: #0d6efd33;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .protocol-UDP {
+            background-color: #19875433;
+            font-weight: bold;
+            color: #198754;
+        }
+        .protocol-HTTP {
+            background-color: #ffc10733;
+            font-weight: bold;
+            color: #ffc107;
+        }
+        .protocol-DNS {
+            background-color: #fd7e1433;
+            font-weight: bold;
+            color: #fd7e14;
+        }
+        .protocol-OTHER {
+            background-color: #6c757d33;
+            font-weight: bold;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div class="container text-center">
+    <h1><i class="bi bi-wifi"></i> Wireshark</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="interface" class="form-label">Interface réseau :</label>
+            <input type="text" class="form-control text-center" id="interface" name="interface" placeholder="ex: eth0" required>
+        </div>
+        <div class="mb-3">
+            <label for="count" class="form-label">Nombre de paquets :</label>
+            <input type="number" class="form-control text-center" id="count" name="count" placeholder="ex: 10" required>
+        </div>
+        <div class="mb-3">
+            <label for="filter" class="form-label">Filtre (optionnel) :</label>
+            <input type="text" class="form-control text-center" id="filter" name="filter" placeholder="ex: tcp port 80">
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-play-circle"></i> Lancer la capture
+        </button>
+    </form>
+
+    {% if error %}
+        <div class="alert alert-danger mt-4 text-start">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+        </div>
+    {% endif %}
+
+    {% if packets %}
+        <div class="table-responsive mt-4">
+            <h5 class="text-start"><i class="bi bi-clipboard-data"></i> Résultats :</h5>
+            <table class="table table-dark table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Heure</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Protocole</th>
+                        <th>Infos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pkt in packets %}
+                        <tr class="protocol-{{ pkt.protocol|upper if pkt.protocol in ['TCP', 'UDP', 'HTTP', 'DNS'] else 'OTHER' }}">
+                            <td>{{ pkt.num }}</td>
+                            <td>{{ pkt.time }}</td>
+                            <td>{{ pkt.source }}</td>
+                            <td>{{ pkt.destination }}</td>
+                            <td>{{ pkt.protocol }}</td>
+                            <td>{{ pkt.info }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- BOUTON PDF -->
+        <div class="mt-4">
+            <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+                <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+                <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de cette capture Wireshark</p>
+                
+                <form action="{{ url_for('wireshark') }}" method="post">
+                    <input type="hidden" name="interface" value="{{ interface or '' }}">
+                    <input type="hidden" name="count" value="{{ count or '' }}">
+                    <input type="hidden" name="filter" value="{{ filter or '' }}">
+                    <input type="hidden" name="generate_pdf" value="1">
+                    
+                    <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold;">
+                        📄 Télécharger le rapport PDF
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+<div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+        ⬅ Retour au menu
+    </a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+********************************************************************************
+                     Wapiti 3.0.4 - wapiti.sourceforge.io
+                   Rapport pour http://testphp.vulnweb.com/
+                Date du scan : Mon, 19 May 2025 18:29:18 +0000
+                          Portée de ce scan : domain
+********************************************************************************
+
+Résumé des vulnérabilités :
+---------------------------
+                                                      Copie de sauvegarde :   0
+                                                 Injection SQL en aveugle :   0
+                                                     Identifiants faibles :   0
+                                                           Injection CRLF :   0
+               Configuration de la stratégie de securité du contenu (CSP) :   0
+                                               Cross Site Request Forgery :   0
+                                        Fichier potentiellement dangereux :   0
+                                                    Exécution de commande :   0
+                                                    Traversée de dossiers :   0
+                                                Contournement de htaccess :   0
+                                                      HTTP Secure Headers :   0
+                                                     HttpOnly Flag cookie :   0
+                                                            Open Redirect :   0
+                                                       Secure Flag cookie :   0
+                                                            Injection SQL :   0
+                                              Server Side Request Forgery :   0
+                                                     Cross Site Scripting :   0
+                                                      XML External Entity :   0
+********************************************************************************
+
+Résumé des anomalies :
+----------------------
+                                                Erreur interne au serveur :   0
+                                       Consommation anormale de ressource :   0
+********************************************************************************
+Résumé des informations complémentaires :
+-----------------------------------------
+                                               Technologie web identifiée :   0
+********************************************************************************

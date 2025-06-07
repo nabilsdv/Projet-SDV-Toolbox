@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>John the Ripper</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            max-width: 700px;
+            margin-top: 50px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+        }
+        .results {
+            background-color: #252525;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        h1 {
+            color: #0d6efd;
+        }
+        .btn-primary {
+            width: 100%;
+        }
+    </style>
+    <script>
+        function copyToClipboard() {
+            const text = document.getElementById("crack-output").innerText;
+            navigator.clipboard.writeText(text);
+            alert("✔ Résultat copié !");
+        }
+    </script>
+</head>
+<body>
+<div class="container text-center">
+    <h1><i class="bi bi-key"></i> John the Ripper</h1>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="hash" class="form-label">Hash à cracker :</label>
+            <input type="text" class="form-control text-center" id="hash" name="hash" placeholder="ex: 5f4dcc3b..." required>
+        </div>
+        <div class="mb-3">
+            <label for="format" class="form-label">Type de hash :</label>
+            <select name="format" id="format" class="form-select text-center">
+                <option value="auto">Auto-détection</option>
+                <option value="md5">MD5</option>
+                <option value="sha1">SHA1</option>
+                <option value="bcrypt">bcrypt</option>
+                <option value="nt">NTLM</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-unlock-fill"></i> Lancer le crack
+        </button>
+    </form>
+    
+    {% if error %}
+        <div class="alert alert-danger mt-4 text-start">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+        </div>
+    {% endif %}
+    
+    {% if results %}
+        <div class="results mt-4 text-start" id="crack-output">
+            <h5><i class="bi bi-terminal"></i> Résultats :</h5>
+            <pre>{{ results }}</pre>
+        </div>
+        
+        <!-- NOUVEAU BOUTON PDF -->
+        <div class="mt-4">
+            <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+                <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+                <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de ce crackage John the Ripper</p>
+                
+                <form method="post" style="display: inline;">
+                    <input type="hidden" name="hash" value="{{ request.form.get('hash', '') }}">
+                    <input type="hidden" name="format" value="{{ request.form.get('format', '') }}">
+                    <input type="hidden" name="generate_pdf" value="1">
+                    
+                    <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);">
+                        📄 Télécharger le rapport PDF
+                    </button>
+                </form>
+                
+                <small style="color: #999; display: block; margin-top: 15px; font-size: 0.85em;">
+                    Le rapport PDF contiendra le hash, le type, et tous les résultats du crackage.
+                </small>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+        ⬅ Retour au menu
+    </a>
+</div>
+</body>
+</html>

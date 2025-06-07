@@ -1,0 +1,12 @@
+# Nmap 7.94SVN scan initiated Thu Jun  5 23:50:00 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250605235000.txt google.com
+Nmap scan report for google.com (172.217.18.206)
+Host is up (0.0019s latency).
+Other addresses for google.com (not scanned): 2a00:1450:4007:80d::200e
+rDNS record for 172.217.18.206: ham02s14-in-f206.1e100.net
+Not shown: 998 filtered tcp ports (no-response)
+PORT    STATE SERVICE    VERSION
+80/tcp  open  tcpwrapped
+443/tcp open  tcpwrapped
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Thu Jun  5 23:50:26 2025 -- 1 IP address (1 host up) scanned in 26.29 seconds

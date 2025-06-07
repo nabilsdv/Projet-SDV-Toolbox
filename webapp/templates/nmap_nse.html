@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Nmap NSE Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            max-width: 700px;
+            margin-top: 50px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            color: #0d6efd;
+            text-align: center;
+        }
+        .btn-primary {
+            width: 100%;
+        }
+        .results {
+            background-color: #252525;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .form-control, .form-select {
+            background-color: #252525;
+            border: 1px solid #444;
+            color: white;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #252525;
+            border-color: #0d6efd;
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .form-label {
+            color: #ccc;
+        }
+        .script-info {
+            background-color: #252525;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        .script-category {
+            color: #0d6efd;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .script-item {
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+        .script-name {
+            color: #00c8ff;
+            font-weight: bold;
+        }
+    </style>
+    <script>
+        // Script vide - bouton copier supprimé
+    </script>
+</head>
+<body>
+<div class="container text-center">
+    <h1><i class="bi bi-radar"></i> Nmap NSE Scanner</h1>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label for="target" class="form-label">🎯 Cible :</label>
+            <input type="text" class="form-control text-center" id="target" name="target" 
+                   placeholder="IP ou domaine (ex: google.com)" 
+                   value="{{ target or '' }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="script" class="form-label">📜 Script NSE :</label>
+            <select name="script" id="script" class="form-select text-center" required>
+                <option value="">Choisir un script...</option>
+                {% for s in scripts %}
+                <option value="{{ s }}" {% if s == selected_script %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-play-circle"></i> Lancer le scan NSE
+        </button>
+    </form>
+
+    <!-- Info sur les scripts -->
+    <div class="script-info">
+        <div class="script-category">📋 Scripts NSE populaires :</div>
+        <div class="script-item"><span class="script-name">http-title</span> - Récupère les titres des pages web</div>
+        <div class="script-item"><span class="script-name">ssl-cert</span> - Informations certificats SSL</div>
+        <div class="script-item"><span class="script-name">vuln</span> - Détection de vulnérabilités communes</div>
+        <div class="script-item"><span class="script-name">ftp-anon</span> - Détecte les serveurs FTP anonymes</div>
+        <div class="script-item"><span class="script-name">ssh-hostkey</span> - Énumération des clés SSH</div>
+        <div class="script-item"><span class="script-name">smb-vuln-ms17-010</span> - Détection EternalBlue</div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger mt-4 text-start">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+        </div>
+    {% endif %}
+    
+    {% if results %}
+        <div class="results mt-4 text-start" id="nmap-output">
+            <h5><i class="bi bi-terminal"></i> Résultats du scan NSE :</h5>
+            <pre>{{ results }}</pre>
+        </div>
+        
+        <!-- BOUTON PDF -->
+        <div class="mt-4">
+            <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+                <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+                <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de ce scan Nmap NSE</p>
+                
+                <form action="{{ url_for('nmap_nse') }}" method="post">
+                    <input type="hidden" name="target" value="{{ target or '' }}">
+                    <input type="hidden" name="script" value="{{ selected_script or '' }}">
+                    <input type="hidden" name="generate_pdf" value="1">
+                    
+                    <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold;">
+                        📄 Télécharger le rapport PDF
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+        ⬅ Retour au menu
+    </a>
+</div>
+</body>
+</html>

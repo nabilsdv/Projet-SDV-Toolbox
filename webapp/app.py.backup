@@ -1,0 +1,853 @@
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, session, redirect, flash
+from markupsafe import Markup
+from bs4 import BeautifulSoup
+import datetime
+from OpenSSL import crypto
+import subprocess
+import uuid
+import os
+import tempfile
+import re
+import time
+import json
+import requests
+import ssl
+import socket
+import idna
+
+users_db = {
+    'admin': {'password': 'admin123', 'role': 'Administrateur'},
+    'pentester': {'password': 'hack2024', 'role': 'Pentester Senior'}, 
+    'analyst': {'password': 'security01', 'role': 'Security Analyst'},
+    'junior': {'password': 'newbie456', 'role': 'Junior Tester'},
+    'guest': {'password': 'guest789', 'role': 'Invité'}
+}
+
+UPLOAD_FOLDER = "/tmp"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app = Flask(__name__, template_folder="templates")
+
+app.secret_key = 'sdv-toolbox-secret-key-2024'
+
+def format_zap_results(json_data):
+    formatted = ""
+    for alert in json_data:
+        severity = alert.get("risk", "N/A").lower()
+        color_class = {
+            "high": "text-danger",
+            "medium": "text-warning",
+            "low": "text-success",
+            "informational": "text-info"
+        }.get(severity, "text-muted")
+
+        formatted += f"<div class='mb-4 p-3 border rounded'>"
+        formatted += f"<h5><span class='{color_class}'>🔎 {alert.get('alert', 'Alerte inconnue')}</span></h5>"
+        formatted += f"<p><strong>URL :</strong> {alert.get('url', 'N/A')}</p>"
+        formatted += f"<p><strong>Risque :</strong> <span class='{color_class}'>{alert.get('risk', 'N/A')}</span></p>"
+        formatted += f"<p><strong>Description :</strong> {alert.get('description', '')}</p>"
+        formatted += f"<p><strong>Solution :</strong> {alert.get('solution', '')}</p>"
+
+        tags = alert.get("tags", {})
+        if tags:
+            formatted += "<p><strong>Références :</strong><ul>"
+            for label, url in tags.items():
+                formatted += f"<li><a href='{url}' target='_blank'>{label}</a></li>"
+            formatted += "</ul></p>"
+
+        formatted += "</div>"
+    return Markup(formatted)
+
+@app.route('/')
+def home():
+    if 'username' not in session:
+    	return redirect('/login')
+    return render_template("index.html")
+
+# -------------------------- SÉCURITÉ --------------------------
+@app.route('/nmap', methods=['GET', 'POST'])
+def nmap_ui():
+    results = None
+    if request.method == 'POST':
+        target = request.form.get('target')
+        scan_type = request.form.get('type')
+        if not target:
+            results = "❌ Veuillez entrer une IP valide."
+        else:
+            if scan_type == "complet":
+                cmd = ["sudo", "nmap", "-A", "-T4", "-p-", target]
+            elif scan_type == "furtif":
+                cmd = ["sudo", "nmap", "-sS", "-sC", "-sV", "-Pn", target]
+            else:
+                cmd = ["sudo", "nmap", "-sV", target]
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=300)
+                results = result.stdout
+            except Exception as e:
+                results = f"❌ Erreur : {str(e)}"
+    return render_template("nmap.html", results=results)
+
+@app.route('/metasploit', methods=['GET', 'POST'])
+def metasploit_ui():
+    results = ''
+    summary = ''
+    if request.method == 'POST':
+        exploit = request.form['exploit'].strip()
+        rhost = request.form['rhost'].strip()
+        rport = request.form['rport'].strip()
+        payload = request.form['payload'].strip()
+
+        if not all([exploit, rhost, rport, payload]):
+            summary = "❌ Tous les champs sont requis."
+            return render_template("metasploit.html", results=results, summary=summary)
+
+        # Création du fichier temporaire .rc pour automatiser msfconsole
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".rc") as tmp:
+            tmp.write(f"use {exploit}\n".encode())
+            tmp.write(f"set RHOSTS {rhost}\n".encode())
+            tmp.write(f"set RPORT {rport}\n".encode())
+            tmp.write(f"set PAYLOAD {payload}\n".encode())
+            tmp.write(b"exploit -z\n")
+            tmp.write(b"exit\n")
+            rc_filename = tmp.name
+
+        try:
+            cmd = ["msfconsole", "-q", "-r", rc_filename]
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            raw_output = result.stdout
+
+            # Nettoyer les codes ANSI + répétitions
+            clean_output = re.sub(r'\x1b[^m]*m', '', raw_output)  # Enlève couleurs ANSI
+            clean_output = '\n'.join([line for line in clean_output.splitlines() if not re.match(r'\[\*\] Starting the Metasploit Framework console', line)])
+
+            results = clean_output.strip()
+
+            # Déterminer le statut :
+            if "Exploit completed, but no session was created" in results:
+                summary = "⚠️ Exploit terminé mais aucune session n'a été ouverte."
+            elif "Meterpreter session" in results or "Command shell session" in results:
+                summary = "✅ Exploit réussi, une session a été ouverte ! 🎉"
+            else:
+                summary = "ℹ️ Exploit exécuté. Vérifie les logs ci-dessous pour plus de détails."
+
+        except subprocess.TimeoutExpired:
+            summary = "⏱ Temps limite dépassé. Exploit interrompu."
+        except Exception as e:
+            summary = f"❌ Erreur Metasploit : {str(e)}"
+        finally:
+            os.remove(rc_filename)
+
+    return render_template("metasploit.html", results=results, summary=summary)
+
+@app.route('/wireshark', methods=['GET', 'POST'])
+def wireshark():
+    packets = []
+    error = None
+
+    if request.method == 'POST':
+        interface = request.form.get('interface')
+        count = request.form.get('count')
+        filter_expr = request.form.get('filter')
+
+        if not interface or not count:
+            error = "Merci de remplir l'interface réseau et le nombre de paquets."
+        else:
+            try:
+                cmd = ['tshark', '-i', interface, '-c', count, '-T', 'fields',
+                       '-e', 'frame.number', '-e', 'frame.time_relative',
+                       '-e', 'ip.src', '-e', 'ip.dst', '-e', '_ws.col.Protocol',
+                       '-e', '_ws.col.Info']
+
+                if filter_expr:
+                    cmd.extend(['-f', filter_expr])
+
+                print(f"[Wireshark] Commande : {' '.join(cmd)}")
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+
+                if result.returncode != 0:
+                    error = f"Erreur Tshark : {result.stderr.strip()}"
+                else:
+                    # On parse ligne par ligne les paquets capturés
+                    for line in result.stdout.strip().split('\n'):
+                        if not line.strip():
+                            continue
+                        # Chaque champ est séparé par des tabulations
+                        fields = line.split('\t')
+                        while len(fields) < 6:
+                            fields.append('-')
+                        packet = {
+                            'num': fields[0],
+                            'time': fields[1],
+                            'source': fields[2],
+                            'destination': fields[3],
+                            'protocol': fields[4],
+                            'info': fields[5]
+                        }
+                        packets.append(packet)
+
+            except subprocess.TimeoutExpired:
+                error = "⏱ La capture a pris trop de temps et a été interrompue."
+            except Exception as e:
+                error = f"❌ Erreur Tshark : {str(e)}"
+
+    return render_template('wireshark.html', packets=packets, error=error)
+
+@app.route('/zap', methods=['GET', 'POST'])
+def zap_scan():
+    results = ''
+    error = ''
+    if request.method == 'POST':
+        target = request.form.get('target')
+
+        if not target:
+            error = "❌ Merci de renseigner une URL cible."
+            return render_template('zap.html', results=results, error=error)
+
+        try:
+            zap_api = "http://127.0.0.1:8090"
+
+            # Spider
+            requests.get(f"{zap_api}/JSON/spider/action/scan/", params={"url": target})
+            time.sleep(10)
+
+            # Active scan
+            requests.get(f"{zap_api}/JSON/ascan/action/scan/", params={"url": target})
+            time.sleep(20)
+
+            # Alerts
+            response = requests.get(f"{zap_api}/JSON/core/view/alerts/", params={"baseurl": target})
+            data = response.json()
+
+            if data.get('alerts'):
+                results = format_zap_results(data['alerts'])
+            else:
+                error = "✅ Aucun problème détecté sur la cible."
+
+        except Exception as e:
+            error = f"❌ Erreur pendant le scan ZAP : {str(e)}"
+
+    return render_template('zap.html', results=results, error=error)
+
+# -------------------------- DÉVELOPPEMENT --------------------------
+@app.route('/burpsuite', methods=['GET', 'POST'])
+def burpsuite_ui():
+    results = ""
+    error = ""
+
+    if request.method == 'POST':
+        if 'report' not in request.files:
+            error = "❌ Aucun fichier reçu."
+            return render_template("burpsuite.html", results=None, error=error)
+
+        file = request.files['report']
+        if file.filename == '':
+            error = "❌ Aucun fichier sélectionné."
+            return render_template("burpsuite.html", results=None, error=error)
+
+        filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(filepath)
+
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                soup = BeautifulSoup(f, 'html.parser')
+
+            issues = soup.find_all('issue') or soup.find_all('tr', class_='issue') or []
+
+            if not issues:
+                error = "⚠ Aucun problème détecté ou format non pris en charge."
+            else:
+                html_result = ""
+                for issue in issues:
+                    title = issue.find('name') or issue.find('td', class_='name')
+                    severity = issue.find('severity') or issue.find('td', class_='severity')
+                    host = issue.find('host') or issue.find('td', class_='host')
+                    path = issue.find('path') or issue.find('td', class_='path')
+                    desc = issue.find('issueBackground') or issue.find('td', class_='issueBackground')
+                    rem = issue.find('remediationBackground') or issue.find('td', class_='remediationBackground')
+
+                    sev_class = {
+                        'High': 'text-danger',
+                        'Medium': 'text-warning',
+                        'Low': 'text-success',
+                        'Information': 'text-info'
+                    }.get(severity.text.strip() if severity else '', 'text-muted')
+
+                    html_result += f"""
+                    <div class="border rounded p-3 mb-3">
+                        <h5 class="{sev_class}">🛡️ {title.text.strip() if title else 'Sans titre'}</h5>
+                        <p><strong>Hôte :</strong> {host.text.strip() if host else 'Inconnu'}{path.text.strip() if path else ''}</p>
+                        <p><strong>Gravité :</strong> <span class="{sev_class}">{severity.text.strip() if severity else 'Non spécifié'}</span></p>
+                        <p><strong>Description :</strong><br>{desc.text.strip() if desc else '...'}</p>
+                        <p><strong>Solution :</strong><br>{rem.text.strip() if rem else '...'}</p>
+                    </div>
+                    """
+
+                results = Markup(html_result)
+
+        except Exception as e:
+            error = f"❌ Erreur lors de l’analyse : {str(e)}"
+
+    return render_template("burpsuite.html", results=results, error=error)
+
+@app.route('/postman', methods=['GET', 'POST'])
+def postman_ui():
+    response_data = None
+    error = None
+
+    if request.method == 'POST':
+        url = request.form.get('url')
+        method = request.form.get('method')
+        payload = request.form.get('payload')
+
+        try:
+            if method == 'GET':
+                res = requests.get(url, timeout=10)
+            elif method == 'POST':
+                res = requests.post(url, data=payload, timeout=10)
+            else:
+                raise ValueError("Méthode non supportée")
+
+            response_data = {
+                'status_code': res.status_code,
+                'headers': dict(res.headers),
+                'body': res.text
+            }
+
+        except Exception as e:
+            error = f"❌ Erreur : {str(e)}"
+
+    return render_template('postman.html', response=response_data, error=error)
+
+@app.route('/sqlmap', methods=['GET', 'POST'])
+def sqlmap_ui():
+    results = ''
+    error = ''
+    if request.method == 'POST':
+        url = request.form['target'].strip()
+
+        if not url:
+            error = "❌ Veuillez entrer une URL valide."
+        else:
+            try:
+                cmd = [
+                    'sqlmap',
+                    '-u', url,
+                    '--batch',              # pas d'interaction manuelle
+                    '--level', '5',         # test plus poussé
+                    '--risk', '3',          # risque plus élevé
+                    '--random-agent',       # change User-Agent
+                    '--dbs',                # récupère les BDD
+                    '--users',              # récupère les utilisateurs
+                    '--tables',             # récupère les tables
+                    '--columns',            # récupère les colonnes
+                    '--dump'                # essaie de dumper des données
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                results = result.stdout
+
+                if not results.strip():
+                    error = "⚠ Aucun résultat. L'URL n'est peut-être pas vulnérable."
+
+            except subprocess.TimeoutExpired:
+                error = "⏱ Le scan a dépassé le temps limite (5 min)."
+            except Exception as e:
+                error = f"❌ Erreur SQLmap : {str(e)}"
+
+    return render_template("sqlmap.html", results=results, error=error)
+
+@app.route('/amass', methods=['GET', 'POST'])
+def amass():
+    import time
+    results = ''
+    error = ''
+    filename = ''
+    nb_lignes = 0
+
+    # 🧹 Purge automatique : supprime les fichiers de plus de 24h
+    for file in os.listdir('amass_results'):
+        filepath = os.path.join('amass_results', file)
+        if os.path.isfile(filepath):
+            if time.time() - os.path.getmtime(filepath) > 86400:  # 1 jour
+                os.remove(filepath)
+
+    if request.method == 'POST':
+        domain = request.form['domain'].strip()
+        filename = os.path.join('amass_results', f"result_{uuid.uuid4().hex}.txt")
+
+        try:
+            subprocess.run(
+                ['amass', 'enum', '-passive', '-d', domain, '-o', filename],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=300
+            )
+        except subprocess.TimeoutExpired:
+            error = "⏱ Le scan a dépassé le temps limite. Affichage partiel possible si des données ont été récupérées."
+
+        # ✅ Lecture des résultats même après timeout
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as f:
+                    results = f.read()
+                    nb_lignes = len(results.strip().splitlines())
+                if not results.strip() and not error:
+                    error = "⚠ Aucun résultat trouvé. Essaie un autre domaine ou vérifie ta connexion."
+            except Exception as e:
+                error = f"❌ Erreur de lecture du fichier : {str(e)}"
+        else:
+            if not error:
+                error = "❌ Fichier de résultats introuvable."
+
+    return render_template("amass.html", results=results, error=error, filename=filename, nb_lignes=nb_lignes)
+
+# -------------------------- INFRASTRUCTURE --------------------------
+@app.route('/sslcheck', methods=['GET', 'POST'])
+def ssl_check():
+    results = None
+    error = None
+
+    if request.method == 'POST':
+        domain = request.form.get('domain', '').strip()
+        if not domain:
+            error = "❌ Merci de saisir un nom de domaine valide."
+            return render_template('ssl.html', results=results, error=error)
+
+        try:
+            hostname = domain.replace("https://", "").replace("http://", "").split("/")[0]
+            hostname_idna = idna.encode(hostname).decode()
+
+            context = ssl.create_default_context()
+
+            with socket.create_connection((hostname_idna, 443), timeout=5) as sock:
+                with context.wrap_socket(sock, server_hostname=hostname_idna) as ssock:
+                    cert_bin = ssock.getpeercert(binary_form=True)
+                    cert = crypto.load_certificate(crypto.FILETYPE_ASN1, cert_bin)
+
+                    subject = cert.get_subject()
+                    issuer = cert.get_issuer()
+
+                    not_before = datetime.datetime.strptime(cert.get_notBefore().decode(), "%Y%m%d%H%M%SZ")
+                    not_after = datetime.datetime.strptime(cert.get_notAfter().decode(), "%Y%m%d%H%M%SZ")
+                    now = datetime.datetime.utcnow()
+                    remaining_days = (not_after - now).days
+                    is_valid = remaining_days > 0
+
+                    san_list = []
+                    for i in range(cert.get_extension_count()):
+                        ext = cert.get_extension(i)
+                        if ext.get_short_name().decode() == 'subjectAltName':
+                            san_text = ext.__str__()
+                            for san in san_text.split(', '):
+                                if san.startswith('DNS:'):
+                                    san_list.append(san[4:])
+
+                    is_ca = False
+                    for i in range(cert.get_extension_count()):
+                        ext = cert.get_extension(i)
+                        if ext.get_short_name().decode() == 'basicConstraints':
+                            if 'CA:TRUE' in str(ext):
+                                is_ca = True
+
+                    is_self_signed = (issuer.CN == subject.CN) and (getattr(issuer, 'O', None) == getattr(subject, 'O', None))
+
+                    results = {
+                        'domain': hostname,
+                        'subject': {
+                            'CN': subject.CN,
+                            'O': getattr(subject, 'O', None),
+                            'OU': getattr(subject, 'OU', None)
+                        },
+                        'issuer': {
+                            'CN': issuer.CN,
+                            'O': getattr(issuer, 'O', None)
+                        },
+                        'start_date': not_before.strftime('%d %b %Y'),
+                        'expire_date': not_after.strftime('%d %b %Y'),
+                        'remaining_days': remaining_days,
+                        'is_valid': is_valid,
+                        'signature_algorithm': cert.get_signature_algorithm().decode(),
+                        'version': cert.get_version(),
+                        'serial_number': format(cert.get_serial_number(), 'x'),
+                        'is_self_signed': is_self_signed,
+                        'is_ca': is_ca,
+                        'san': san_list
+                    }
+
+                    if not is_valid:
+                        error = f"❌ Le certificat est expiré depuis {abs(remaining_days)} jours (le {not_after.strftime('%d %b %Y')})."
+                    elif is_self_signed:
+                        error = "⚠ Le certificat est auto-signé et non approuvé."
+                    elif remaining_days <= 30:
+                        error = f"⚠ Le certificat expire bientôt (dans {remaining_days} jours)."
+                    else:
+                        error = "✅ Le certificat est valide."
+
+        except ssl.SSLError as e:
+            message = str(e).lower()
+            if "expired" in message:
+                error = "❌ Le certificat est expiré."
+            else:
+                error = f"❌ Erreur de vérification SSL: {message}"
+            results = None
+
+        except socket.gaierror:
+            error = "❌ Impossible de résoudre le nom de domaine."
+            results = None
+
+        except socket.timeout:
+            error = "❌ Connexion au serveur expirée (timeout)."
+            results = None
+
+        except ConnectionRefusedError:
+            error = "❌ Connexion refusée par le serveur."
+            results = None
+
+        except Exception as e:
+            error = f"❌ Erreur lors de la vérification: {str(e)}"
+            results = None
+
+    return render_template('ssl.html', results=results, error=error)
+
+@app.route("/wapiti", methods=["GET", "POST"])
+def wapiti_scan():
+    results = None
+    error = None
+
+    if request.method == "POST":
+        url = request.form.get("url", "").strip()
+        if not url.startswith("http"):
+            url = "http://" + url
+
+        if not url:
+            error = "❌ Merci de saisir une URL valide."
+            return render_template("wapiti.html", results=results, error=error)
+
+        report_name = f"wapiti_{uuid.uuid4().hex[:8]}"
+        output_path = os.path.join(UPLOAD_FOLDER, report_name + ".txt")
+
+        try:
+            cmd = [
+                "wapiti",
+                "-u", url,
+                "-f", "txt",
+                "-o", output_path,
+                "-m", "2",
+                "--scope", "domain"
+            ]
+            completed = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
+            if os.path.exists(output_path):
+                with open(output_path, "r") as f:
+                    results = f.read()
+            else:
+                error = "❌ Le scan n'a pas généré de rapport. Vérifie l'URL ou réessaie."
+
+        except subprocess.TimeoutExpired:
+            error = "⏱ Le scan Wapiti a mis trop de temps à répondre."
+        except Exception as e:
+            error = f"❌ Erreur lors de l'exécution de Wapiti : {str(e)}"
+
+    return render_template("wapiti.html", results=results, error=error)
+
+@app.route('/hydra', methods=['GET', 'POST'])
+def hydra_ui():
+    results = None
+    if request.method == 'POST':
+        target = request.form.get('target')
+        user = request.form.get('user')
+        wordlist = request.form.get('wordlist')
+
+        if not all([target, user, wordlist]):
+            results = "❌ Tous les champs sont requis."
+        else:
+            try:
+                cmd = ["sudo", "/usr/bin/hydra", "-l", user, "-P", wordlist, "-t", "4",  "-vV", target, "ssh"]
+                print(f"[DEBUG] CMD => {' '.join(cmd)}")  # Affiche dans le terminal
+                result = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=300)
+                results = result.stdout + "\n" + result.stderr
+            except subprocess.TimeoutExpired:
+                results = "⏰ L'attaque a mis trop de temps."
+            except Exception as e:
+                results = f"❌ Erreur inconnue : {str(e)}"
+
+    return render_template("hydra.html", results=results)
+
+# -------------------------- SUPPORT CLIENT --------------------------
+@app.route('/nikto', methods=['GET', 'POST'])
+def nikto_ui():
+    results = None
+    if request.method == 'POST':
+        target = request.form.get('target')
+        if not target:
+            results = "❌ Veuillez entrer une URL valide."
+        else:
+            try:
+                cmd = ["nikto", "-h", target]
+                result = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=180)
+                results = result.stdout + "\n" + result.stderr
+            except subprocess.TimeoutExpired:
+                results = "⏰ Le scan a mis trop de temps. Essaie avec un autre site ou augmente le délai."
+            except Exception as e:
+                results = f"❌ Erreur inconnue Nikto : {str(e)}"
+    return render_template("nikto.html", results=results)
+
+@app.route('/sslyze', methods=['GET', 'POST'])
+def sslyze_ui():
+    results = None
+    if request.method == 'POST':
+        domain = request.form.get('domain')
+        if not domain:
+            results = "❌ Veuillez entrer un domaine ou une IP."
+        else:
+            try:
+                # Retirer --regular
+                cmd = ["sslyze", f"{domain}:443"]
+                result = subprocess.run(cmd, capture_output=True, text=True, check=False, timeout=90)
+                results = result.stdout + "\n" + result.stderr
+            except subprocess.TimeoutExpired:
+                results = "⏰ Le scan a mis trop de temps."
+            except Exception as e:
+                results = f"❌ Erreur SSLyze : {str(e)}"
+    return render_template("sslyze.html", results=results)
+
+@app.route('/ettercap', methods=['GET', 'POST'])
+def ettercap():
+    error = None
+    success = None
+    output = None
+
+    if request.method == 'POST':
+        interface = request.form.get('interface')
+        target_ip = request.form.get('target_ip')
+        gateway_ip = request.form.get('gateway_ip')
+        simulate = request.form.get('simulate') == 'on'
+
+        if not interface or not target_ip or not gateway_ip:
+            error = "❌ Tous les champs sont obligatoires."
+        else:
+            if simulate:
+                success = f"✅ (Simulation) Attaque MITM simulée entre {target_ip} et {gateway_ip} via {interface}."
+                output = "🔁 Mode simulation activé. Aucun paquet intercepté."
+            else:
+                try:
+                    command = [
+                        'ettercap', '-T', '-M', 'arp:remote',
+                        '-i', interface,
+                        '-S',
+                        '-d',
+                        f'/{target_ip}//', f'/{gateway_ip}//'
+                    ]
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=60)
+                    if result.returncode == 0:
+                        success = f"✅ Scan réussi sur {target_ip} via la passerelle {gateway_ip}."
+                        output = result.stdout
+                    else:
+                        error = "❌ Une erreur est survenue : " + result.stderr
+                except subprocess.TimeoutExpired:
+                    error = "⏱ Le scan a mis trop de temps à répondre."
+                except Exception as e:
+                    error = f"❌ Erreur : {str(e)}"
+
+    return render_template('ettercap.html', error=error, success=success, output=output)
+
+@app.route('/theharvester', methods=['GET', 'POST'])
+def theharvester():
+    results = None
+    error = None
+
+    if request.method == 'POST':
+        domain = request.form.get('domain', '').strip()
+        if not domain:
+            error = "❌ Merci de saisir un nom de domaine."
+            return render_template('maltego.html', error=error, results=results)
+
+        try:
+            command = f"theHarvester -d {domain} -b all"
+            output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, text=True)
+            
+            # Extraction des données utiles
+            emails = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', output)
+            ips = re.findall(r"\d+\.\d+\.\d+\.\d+", output)
+            urls = re.findall(r"https?://[^\s]+", output)
+            hosts = re.findall(r"(?<=Hosts found: )\d+.*?(?=\n\n|\Z)", output, re.DOTALL)
+            asns = re.findall(r"AS\d+", output)
+
+            results = {
+                'emails': list(set(emails)),
+                'ips': list(set(ips)),
+                'urls': list(set(urls)),
+                'hosts': list(set(hosts)),
+                'asns': list(set(asns)),
+                'raw': output
+            }
+
+            if not any([results['emails'], results['ips'], results['urls'], results['hosts'], results['asns']]):
+                error = "⚠️ Aucune donnée enrichie trouvée. Certains modules peuvent nécessiter des clés API."
+
+        except subprocess.CalledProcessError as e:
+            error = "❌ Une erreur est survenue pendant l’analyse. Certains modules peuvent nécessiter des clés API."
+            results = {'raw': e.output}
+
+    return render_template("maltego.html", error=error, results=results)
+
+# -------------------------- RH & ADMIN --------------------------
+@app.route('/john', methods=['GET', 'POST'])
+def john_ui():
+    results = None
+    cracked = False
+    error = None
+
+    if request.method == 'POST':
+        hash_value = request.form.get('hash')
+        hash_format = request.form.get('format')
+        wordlist = "/usr/share/wordlists/rockyou.txt"  # Chemin de ta wordlist
+
+        if not hash_value:
+            error = "❌ Veuillez entrer un hash valide."
+        else:
+            with tempfile.NamedTemporaryFile(mode='w+', delete=False) as tmpfile:
+                tmpfile.write(hash_value + "\n")
+                tmpfile_path = tmpfile.name
+
+            try:
+                # Commande john avec ou sans format
+                if hash_format == "md5":
+                    john_cmd = ["john", "--format=Raw-MD5", "--wordlist=" + wordlist, tmpfile_path]
+                elif hash_format == "sha1":
+                    john_cmd = ["john", "--format=Raw-SHA1", "--wordlist=" + wordlist, tmpfile_path]
+                elif hash_format == "nt":
+                    john_cmd = ["john", "--format=NT", "--wordlist=" + wordlist, tmpfile_path]
+                elif hash_format == "bcrypt":
+                    john_cmd = ["john", "--format=bcrypt", "--wordlist=" + wordlist, tmpfile_path]
+                else:
+                    # auto
+                    john_cmd = ["john", "--wordlist=" + wordlist, tmpfile_path]
+
+                run = subprocess.run(john_cmd, capture_output=True, text=True, timeout=60)
+                results = run.stdout + run.stderr
+
+                # Vérifie si un mot de passe a été cracké
+                show = subprocess.run(["john", "--show", tmpfile_path], capture_output=True, text=True)
+                if ":" in show.stdout:
+                    cracked = True
+                    results += "\n" + show.stdout
+
+                if not cracked:
+                    error = "⚠️ Aucun mot de passe trouvé. Essaye avec un autre hash ou une wordlist différente."
+
+            except subprocess.TimeoutExpired:
+                error = "⏱ Le processus a dépassé le temps limite."
+            except Exception as e:
+                error = f"❌ Erreur : {str(e)}"
+            finally:
+                os.remove(tmpfile_path)
+
+    return render_template("john.html", results=results, error=error, cracked=cracked)
+
+@app.route('/acunetix', methods=['GET', 'POST'])
+def acunetix_ui():
+    results = None
+    error = None
+    fake_report = None
+
+    if request.method == 'POST':
+        target = request.form.get('target')
+        if not target or not target.startswith("http"):
+            error = "❌ Merci d’entrer une URL valide (avec http ou https)."
+        else:
+            # Rapport simulé
+            fake_report = {
+                "target": target,
+                "scan_date": datetime.datetime.now().strftime("%d %B %Y à %H:%M"),
+                "vulnerabilities": [
+                    {"severity": "High", "name": "SQL Injection", "description": "Injection possible via le paramètre `id`.", "recommendation": "Utiliser des requêtes préparées."},
+                    {"severity": "Medium", "name": "Cross-Site Scripting (XSS)", "description": "Injection de script possible dans le champ `search`.", "recommendation": "Échapper les caractères spéciaux côté serveur."},
+                    {"severity": "Low", "name": "Directory Listing", "description": "Le répertoire `/uploads/` est accessible.", "recommendation": "Désactiver l'indexation de ce répertoire via le fichier `.htaccess`."}
+                ]
+            }
+
+    return render_template("acunetix.html", results=fake_report, error=error)
+
+@app.route('/nmap_nse', methods=['GET', 'POST'])
+def nmap_nse():
+    results = ''
+    error = ''
+    output_file = None
+    selected_script = None
+
+    scripts = [
+        "http-title",
+        "ftp-anon",
+        "ssh-hostkey",
+        "smb-os-discovery",
+        "dns-zone-transfer",
+        "ssl-cert",
+        "http-enum"
+    ]
+
+    if request.method == 'POST':
+        target = request.form.get('target')
+        selected_script = request.form.get('script')
+
+        if not target or not selected_script:
+            error = "❌ Merci d’indiquer une cible et un script."
+        else:
+            try:
+                timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                output_file = os.path.join(UPLOAD_FOLDER, f'nmap_nse_{timestamp}.txt')
+
+                cmd = ['nmap', '-sV', '--script', selected_script, target, '-oN', output_file]
+                subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+
+                if os.path.exists(output_file):
+                    with open(output_file, 'r') as f:
+                        results = f.read()
+                else:
+                    error = "❌ Rapport introuvable."
+            except subprocess.TimeoutExpired:
+                error = "⏱ Le scan a mis trop de temps à répondre (3 min max)."
+            except Exception as e:
+                error = f"❌ Erreur lors de l’exécution : {str(e)}"
+
+    return render_template("nmap_nse.html", results=results, error=error,
+                           output_file=os.path.basename(output_file) if output_file else None,
+                           scripts=scripts,
+                           selected_script=selected_script)
+
+@app.route('/nmap_nse/download/<filename>')
+def download_nmap_report(filename):
+    path = os.path.join(UPLOAD_FOLDER, filename)
+
+    if os.path.exists(path):
+        return send_file(path, as_attachment=True)
+    
+    return "Fichier introuvable", 404
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        
+        if username in users_db and users_db[username]['password'] == password:
+            session['username'] = username
+            session['role'] = users_db[username]['role']
+            session['login_count'] = session.get('login_count', 0) + 1
+            flash('Connexion réussie !', 'success')
+            return redirect('/')
+        else:
+            flash('Identifiants incorrects !', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    flash('Déconnexion réussie !', 'success')
+    return redirect('/login')
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)

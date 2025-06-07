@@ -1,0 +1,138 @@
+# Nmap 7.94SVN scan initiated Fri May 30 16:45:14 2025 as: /usr/lib/nmap/nmap -sV --script ssl-cert -oN uploads/nmap_nse_20250530164514.txt github.com
+Nmap scan report for github.com (140.82.121.3)
+Host is up (0.0063s latency).
+rDNS record for 140.82.121.3: lb-140-82-121-3-fra.github.com
+Not shown: 997 filtered tcp ports (no-response)
+PORT    STATE SERVICE   VERSION
+22/tcp  open  ssh       (protocol 2.0)
+| fingerprint-strings: 
+|   NULL: 
+|_    SSH-2.0-35e2946a
+80/tcp  open  http
+| fingerprint-strings: 
+|   DNSStatusRequestTCP, DNSVersionBindReqTCP, Help, RPCCheck, RTSPRequest, X11Probe: 
+|     HTTP/1.1 400 Bad request
+|     Content-length: 90
+|     Cache-Control: no-cache
+|     Connection: close
+|     Content-Type: text/html
+|     <html><body><h1>400 Bad request</h1>
+|     Your browser sent an invalid request.
+|     </body></html>
+|   FourOhFourRequest: 
+|     HTTP/1.1 301 Moved Permanently
+|     Content-Length: 0
+|     Location: https:///nice%20ports%2C/Tri%6Eity.txt%2ebak
+|     connection: close
+|   GetRequest, HTTPOptions: 
+|     HTTP/1.1 301 Moved Permanently
+|     Content-Length: 0
+|     Location: https:///
+|_    connection: close
+443/tcp open  ssl/https
+| ssl-cert: Subject: commonName=github.com
+| Subject Alternative Name: DNS:github.com, DNS:www.github.com
+| Issuer: commonName=Sectigo ECC Domain Validation Secure Server CA/organizationName=Sectigo Limited/stateOrProvinceName=Greater Manchester/countryName=GB
+| Public Key type: ec
+| Public Key bits: 256
+| Signature Algorithm: ecdsa-with-SHA256
+| Not valid before: 2025-02-05T00:00:00
+| Not valid after:  2026-02-05T23:59:59
+| MD5:   6f23:afb5:8b3c:5c0e:2ad3:02a3:abf0:d9be
+|_SHA-1: e433:71dd:d691:4a75:b61f:9e4f:746d:9bf0:dd26:fc3a
+| fingerprint-strings: 
+|   DNSStatusRequestTCP, DNSVersionBindReqTCP, RPCCheck, RTSPRequest, tor-versions: 
+|     HTTP/1.1 400 Bad request
+|     Content-length: 90
+|     Cache-Control: no-cache
+|     Connection: close
+|     Content-Type: text/html
+|     <html><body><h1>400 Bad request</h1>
+|     Your browser sent an invalid request.
+|     </body></html>
+|   FourOhFourRequest: 
+|     HTTP/1.1 301 Moved Permanently
+|     Content-Length: 0
+|     Location: https://github.com/nice%20ports%2C/Tri%6Eity.txt%2ebak
+|     Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+|     connection: close
+|   GetRequest, HTTPOptions: 
+|     HTTP/1.1 301 Moved Permanently
+|     Content-Length: 0
+|     Location: https://github.com/
+|     Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+|_    connection: close
+3 services unrecognized despite returning data. If you know the service/version, please submit the following fingerprints at https://nmap.org/cgi-bin/submit.cgi?new-service :
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port22-TCP:V=7.94SVN%I=7%D=5/30%Time=6839C4C1%P=x86_64-pc-linux-gnu%r(N
+SF:ULL,12,"SSH-2\.0-35e2946a\r\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port80-TCP:V=7.94SVN%I=7%D=5/30%Time=6839C4C1%P=x86_64-pc-linux-gnu%r(G
+SF:etRequest,5D,"HTTP/1\.1\x20301\x20Moved\x20Permanently\r\nContent-Lengt
+SF:h:\x200\r\nLocation:\x20https:///\r\nconnection:\x20close\r\n\r\n")%r(H
+SF:TTPOptions,5D,"HTTP/1\.1\x20301\x20Moved\x20Permanently\r\nContent-Leng
+SF:th:\x200\r\nLocation:\x20https:///\r\nconnection:\x20close\r\n\r\n")%r(
+SF:RTSPRequest,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x
+SF:2090\r\nCache-Control:\x20no-cache\r\nConnection:\x20close\r\nContent-T
+SF:ype:\x20text/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYo
+SF:ur\x20browser\x20sent\x20an\x20invalid\x20request\.\n</body></html>\n")
+SF:%r(X11Probe,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x
+SF:2090\r\nCache-Control:\x20no-cache\r\nConnection:\x20close\r\nContent-T
+SF:ype:\x20text/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYo
+SF:ur\x20browser\x20sent\x20an\x20invalid\x20request\.\n</body></html>\n")
+SF:%r(FourOhFourRequest,80,"HTTP/1\.1\x20301\x20Moved\x20Permanently\r\nCo
+SF:ntent-Length:\x200\r\nLocation:\x20https:///nice%20ports%2C/Tri%6Eity\.
+SF:txt%2ebak\r\nconnection:\x20close\r\n\r\n")%r(RPCCheck,CF,"HTTP/1\.1\x2
+SF:0400\x20Bad\x20request\r\nContent-length:\x2090\r\nCache-Control:\x20no
+SF:-cache\r\nConnection:\x20close\r\nContent-Type:\x20text/html\r\n\r\n<ht
+SF:ml><body><h1>400\x20Bad\x20request</h1>\nYour\x20browser\x20sent\x20an\
+SF:x20invalid\x20request\.\n</body></html>\n")%r(DNSVersionBindReqTCP,CF,"
+SF:HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\r\nCache-Co
+SF:ntrol:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\x20text/htm
+SF:l\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x20browser\x2
+SF:0sent\x20an\x20invalid\x20request\.\n</body></html>\n")%r(DNSStatusRequ
+SF:estTCP,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\
+SF:r\nCache-Control:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\
+SF:x20text/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x2
+SF:0browser\x20sent\x20an\x20invalid\x20request\.\n</body></html>\n")%r(He
+SF:lp,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\r\nC
+SF:ache-Control:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\x20t
+SF:ext/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x20bro
+SF:wser\x20sent\x20an\x20invalid\x20request\.\n</body></html>\n");
+==============NEXT SERVICE FINGERPRINT (SUBMIT INDIVIDUALLY)==============
+SF-Port443-TCP:V=7.94SVN%T=SSL%I=7%D=5/30%Time=6839C4C6%P=x86_64-pc-linux-
+SF:gnu%r(GetRequest,B0,"HTTP/1\.1\x20301\x20Moved\x20Permanently\r\nConten
+SF:t-Length:\x200\r\nLocation:\x20https://github\.com/\r\nStrict-Transport
+SF:-Security:\x20max-age=31536000;\x20includeSubDomains;\x20preload\r\ncon
+SF:nection:\x20close\r\n\r\n")%r(HTTPOptions,B0,"HTTP/1\.1\x20301\x20Moved
+SF:\x20Permanently\r\nContent-Length:\x200\r\nLocation:\x20https://github\
+SF:.com/\r\nStrict-Transport-Security:\x20max-age=31536000;\x20includeSubD
+SF:omains;\x20preload\r\nconnection:\x20close\r\n\r\n")%r(FourOhFourReques
+SF:t,D3,"HTTP/1\.1\x20301\x20Moved\x20Permanently\r\nContent-Length:\x200\
+SF:r\nLocation:\x20https://github\.com/nice%20ports%2C/Tri%6Eity\.txt%2eba
+SF:k\r\nStrict-Transport-Security:\x20max-age=31536000;\x20includeSubDomai
+SF:ns;\x20preload\r\nconnection:\x20close\r\n\r\n")%r(tor-versions,CF,"HTT
+SF:P/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\r\nCache-Contr
+SF:ol:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\x20text/html\r
+SF:\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x20browser\x20se
+SF:nt\x20an\x20invalid\x20request\.\n</body></html>\n")%r(RTSPRequest,CF,"
+SF:HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\r\nCache-Co
+SF:ntrol:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\x20text/htm
+SF:l\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x20browser\x2
+SF:0sent\x20an\x20invalid\x20request\.\n</body></html>\n")%r(RPCCheck,CF,"
+SF:HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090\r\nCache-Co
+SF:ntrol:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:\x20text/htm
+SF:l\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x20browser\x2
+SF:0sent\x20an\x20invalid\x20request\.\n</body></html>\n")%r(DNSVersionBin
+SF:dReqTCP,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-length:\x2090
+SF:\r\nCache-Control:\x20no-cache\r\nConnection:\x20close\r\nContent-Type:
+SF:\x20text/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</h1>\nYour\x
+SF:20browser\x20sent\x20an\x20invalid\x20request\.\n</body></html>\n")%r(D
+SF:NSStatusRequestTCP,CF,"HTTP/1\.1\x20400\x20Bad\x20request\r\nContent-le
+SF:ngth:\x2090\r\nCache-Control:\x20no-cache\r\nConnection:\x20close\r\nCo
+SF:ntent-Type:\x20text/html\r\n\r\n<html><body><h1>400\x20Bad\x20request</
+SF:h1>\nYour\x20browser\x20sent\x20an\x20invalid\x20request\.\n</body></ht
+SF:ml>\n");
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Fri May 30 16:46:38 2025 -- 1 IP address (1 host up) scanned in 83.63 seconds

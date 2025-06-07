@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔗 Ettercap - MITM Attack</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.6);
+        }
+        .result-box {
+            background-color: #d1f5e3;
+            color: #0f5132;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .error-box {
+            background-color: #f8d7da;
+            color: #842029;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-control, .form-select {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            text-align: center;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #2a2a2a;
+            border-color: #00d4ff;
+            color: #fff;
+            box-shadow: 0 0 5px rgba(0, 212, 255, 0.5);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .output-section {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .output-code {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #444;
+        }
+        .info-title {
+            color: #00d4ff;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .form-text {
+            color: #888 !important;
+        }
+        .form-check-label {
+            color: #fff;
+        }
+        .packet-item {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .packet-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .protocol-badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .protocol-http { background-color: #28a745; color: white; }
+        .protocol-https { background-color: #ffc107; color: black; }
+        .protocol-dns { background-color: #17a2b8; color: white; }
+        .protocol-ftp { background-color: #dc3545; color: white; }
+        .protocol-tcp { background-color: #6c757d; color: white; }
+        .protocol-arp { background-color: #ff6b35; color: white; }
+        .protocol-icmp { background-color: #9c27b0; color: white; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .target-info {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Ettercap - MITM Attack</h1>
+
+        <form method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="interface" class="form-label">Interface réseau :</label>
+                    <select class="form-select" id="interface" name="interface" required>
+                        <option value="">Sélectionnez une interface</option>
+                        {% for iface in interfaces %}
+                        <option value="{{ iface }}">{{ iface }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="scan_type" class="form-label">Type de scan :</label>
+                    <select class="form-select" id="scan_type" name="scan_type">
+                        <option value="quick">Rapide (30 sec)</option>
+                        <option value="deep">Approfondi (2 min)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="target_ip" class="form-label">IP de la victime :</label>
+                    <input type="text" class="form-control" id="target_ip" name="target_ip" 
+                           placeholder="192.168.1.100" pattern="^(\d{1,3}\.){3}\d{1,3}$" required>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="gateway_ip" class="form-label">IP de la passerelle :</label>
+                    <input type="text" class="form-control" id="gateway_ip" name="gateway_ip" 
+                           placeholder="192.168.1.1" pattern="^(\d{1,3}\.){3}\d{1,3}$" required>
+                </div>
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="simulate" name="simulate" checked>
+                <label class="form-check-label" for="simulate">
+                    🔁 Mode simulation (recommandé pour les tests)
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+                🚀 Lancer l'attaque MITM
+            </button>
+        </form>
+
+        {% if error %}
+        <div class="error-box mt-4">
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="result-box mt-4">
+            <strong>{{ success }}</strong>
+        </div>
+        {% endif %}
+
+        {% if captured_data %}
+        <div class="output-section">
+            <h5 class="info-title">🎯 Informations de la cible</h5>
+            {% if captured_data.target_info %}
+            <div class="target-info">
+                <div class="row">
+                    <div class="col-md-3"><strong>IP:</strong> {{ captured_data.target_info.ip or 'N/A' }}</div>
+                    <div class="col-md-3"><strong>MAC:</strong> {{ captured_data.target_info.mac or 'N/A' }}</div>
+                    <div class="col-md-3"><strong>Hostname:</strong> {{ captured_data.target_info.hostname or 'N/A' }}</div>
+                    <div class="col-md-3"><strong>OS:</strong> {{ captured_data.target_info.os or 'N/A' }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if captured_data.statistics %}
+            <h5 class="info-title">📊 Statistiques</h5>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ captured_data.statistics.total_packets or 0 }}</div>
+                    <div>Paquets total</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ captured_data.statistics.http_packets or 0 }}</div>
+                    <div>HTTP</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ captured_data.statistics.https_packets or 0 }}</div>
+                    <div>HTTPS</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ captured_data.statistics.dns_packets or 0 }}</div>
+                    <div>DNS</div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if captured_data.intercepted_packets %}
+            <h5 class="info-title mt-4">📦 Paquets interceptés</h5>
+            <div style="max-height: 400px; overflow-y: auto;">
+                {% for packet in captured_data.intercepted_packets %}
+                <div class="packet-item">
+                    <div class="packet-header">
+                        <div>
+                            <span class="protocol-badge protocol-{{ packet.protocol.lower() }}">
+                                {{ packet.protocol }}
+                            </span>
+                            <span class="ms-2">{{ packet.timestamp }}</span>
+                        </div>
+                        <div>
+                            <small>{{ packet.source }} → {{ packet.destination }}</small>
+                        </div>
+                    </div>
+                    <div><strong>Info:</strong> {{ packet.info }}</div>
+                    {% if packet.data %}
+                    <div class="mt-2"><small>{{ packet.data }}</small></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- NOUVEAU : Bouton PDF pour Ettercap -->
+            <div class="mt-4" style="margin-top: 30px !important;">
+                <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+                    <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+                    <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de cette attaque MITM Ettercap</p>
+                    
+                    <form action="{{ url_for('ettercap') }}" method="post">
+                        <input type="hidden" name="generate_pdf" value="1">
+                        <input type="hidden" name="interface" value="{{ request.form.get('interface') }}">
+                        <input type="hidden" name="target_ip" value="{{ request.form.get('target_ip') }}">
+                        <input type="hidden" name="gateway_ip" value="{{ request.form.get('gateway_ip') }}">
+                        <input type="hidden" name="simulate" value="{{ 'on' if request.form.get('simulate') else 'off' }}">
+                        <input type="hidden" name="scan_type" value="{{ request.form.get('scan_type') }}">
+                        
+                        <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            📄 Télécharger le rapport PDF
+                        </button>
+                    </form>
+                    
+                    <small style="color: #999; display: block; margin-top: 15px; font-size: 0.85em;">
+                        Le rapport PDF contiendra toutes les données interceptées avec les statistiques complètes.
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if output %}
+        <div class="output-section">
+            <h5 class="info-title">📋 Logs bruts :</h5>
+            <pre class="output-code">{{ output }}</pre>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+                ⬅  Retour au menu
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

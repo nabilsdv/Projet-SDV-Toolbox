@@ -1,0 +1,21 @@
+# Nmap 7.94SVN scan initiated Tue May 20 14:16:25 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250520141625.txt scan.nmap.org
+Nmap scan report for scan.nmap.org (50.116.1.184)
+Host is up (0.034s latency).
+Other addresses for scan.nmap.org (not scanned): 2600:3c01:e000:3e6::6d4e:7061
+rDNS record for 50.116.1.184: ack.nmap.org
+Not shown: 994 filtered tcp ports (no-response)
+PORT      STATE  SERVICE  VERSION
+22/tcp    open   ssh      OpenSSH 7.4 (protocol 2.0)
+25/tcp    closed smtp
+80/tcp    open   http     Apache httpd 2.4.6
+|_http-title: Did not follow redirect to https://nmap.org/
+|_http-server-header: Apache/2.4.6 (CentOS)
+113/tcp   closed ident
+443/tcp   open   ssl/http Apache httpd 2.4.6
+|_http-server-header: Apache/2.4.6 (CentOS)
+|_http-title: Did not follow redirect to https://nmap.org/
+31337/tcp closed Elite
+Service Info: Host: issues.nmap.org
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue May 20 14:18:02 2025 -- 1 IP address (1 host up) scanned in 96.67 seconds

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Analyse Burp Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+        }
+        .results {
+            background-color: #252525;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+        }
+        h1 {
+            color: #0d6efd;
+        }
+        .text-danger { color: #ff4d4d !important; }
+        .text-warning { color: #ffc107 !important; }
+        .text-success { color: #4caf50 !important; }
+        .text-info { color: #17a2b8 !important; }
+        a { color: #0d6efd; }
+    </style>
+</head>
+<body>
+<div class="container text-center">
+    <h1><i class="bi bi-upload"></i> Importer un Rapport Burp Suite</h1>
+    <form method="POST" enctype="multipart/form-data" class="mt-4">
+        <div class="mb-3 text-start">
+            <label for="report" class="form-label">Fichier rapport Burp (.html ou .xml)</label>
+            <input type="file" class="form-control" name="report" id="report" accept=".html,.xml" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-search"></i> Analyser le rapport
+        </button>
+    </form>
+
+    {% if error %}
+    <div class="alert alert-warning mt-4 text-start">
+        <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    {% if results %}
+    <div class="results mt-4 text-start">
+        <h4><i class="bi bi-clipboard-data"></i> Résultats de l'analyse :</h4>
+        {{ results|safe }}
+    </div>
+
+    <!-- NOUVEAU : Bouton PDF pour Burp Suite -->
+    <div class="mt-4" style="margin-top: 30px !important;">
+        <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+            <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+            <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de cette analyse Burp Suite</p>
+            
+            <form action="{{ url_for('generate_pdf_report') }}" method="post">
+                <input type="hidden" name="tool_name" value="Burp Suite">
+                <input type="hidden" name="results" value="{{ results | striptags }}">
+                <input type="hidden" name="target" value="{{ filename or 'Rapport importé' }}">
+                
+                <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    📄 Télécharger le rapport PDF
+                </button>
+            </form>
+            
+            <small style="color: #999; display: block; margin-top: 15px; font-size: 0.85em;">
+                Le rapport PDF contiendra toutes les vulnérabilités détectées avec leurs détails.
+            </small>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+        ⬅ Retour au menu
+    </a>
+</div>
+
+</body>
+</html>

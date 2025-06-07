@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!DOCTYPE issues [
+<!ELEMENT issues (issue*)>
+<!ELEMENT issue (serialNumber?, type?, name?, host?, path?, location?, severity?, confidence?, issueBackground?, remediationBackground?, issueDetail?, remediationDetail?, requestresponse*)>
+<!ELEMENT serialNumber (#PCDATA)>
+<!ELEMENT type (#PCDATA)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT host (#PCDATA)>
+<!ELEMENT path (#PCDATA)>
+<!ELEMENT location (#PCDATA)>
+<!ELEMENT severity (#PCDATA)>
+<!ELEMENT confidence (#PCDATA)>
+<!ELEMENT issueBackground (#PCDATA)>
+<!ELEMENT remediationBackground (#PCDATA)>
+<!ELEMENT issueDetail (#PCDATA)>
+<!ELEMENT remediationDetail (#PCDATA)>
+<!ELEMENT requestresponse (request?, response?)>
+<!ELEMENT request (#PCDATA)>
+<!ELEMENT response (#PCDATA)>
+]>
+<issues burpVersion="2023.10.3.4" exportTime="Fri May 30 17:15:42 CET 2025">
+  <issue>
+    <serialNumber>5234857234857234</serialNumber>
+    <type>1048832</type>
+    <name>Cross-site scripting (reflected)</name>
+    <host>http://192.168.236.142</host>
+    <path>/search.php</path>
+    <location>GET parameter 'q' in /search.php</location>
+    <severity>High</severity>
+    <confidence>Certain</confidence>
+    <issueBackground>Reflected cross-site scripting vulnerabilities arise when data is copied from a request and echoed into the application's immediate response in an unsafe way. An attacker can use this to construct a request which, if issued by another application user, will cause JavaScript code supplied by the attacker to execute within the user's browser in the context of that user's session with the application.</issueBackground>
+    <remediationBackground>In most situations where user-controllable data is copied into application responses, cross-site scripting attacks can be prevented using two layers of defenses: Input should be validated as strictly as possible on arrival, given the kind of content which is expected. Output should be encoded in a manner that is appropriate for the context into which it will be placed.</remediationBackground>
+    <issueDetail>The application copies unvalidated data from a request parameter into the HTML document that is returned to the user. The payload &lt;script&gt;alert(1)&lt;/script&gt; was submitted in the q parameter, and this input was returned unmodified in the application's response.</issueDetail>
+    <remediationDetail>Encode user-controllable data when it is copied into application responses. Use context-appropriate encoding: HTML entity encoding for HTML contexts, JavaScript string encoding for JavaScript contexts, etc.</remediationDetail>
+  </issue>
+  
+  <issue>
+    <serialNumber>5234857234857235</serialNumber>
+    <type>1048576</type>
+    <name>SQL injection</name>
+    <host>http://192.168.236.142</host>
+    <path>/login.php</path>
+    <location>POST parameter 'username' in /login.php</location>
+    <severity>High</severity>
+    <confidence>Certain</confidence>
+    <issueBackground>SQL injection vulnerabilities arise when user-controllable data is incorporated into database SQL queries in an unsafe manner. An attacker can supply crafted input to break out of the data context in which their input appears and interfere with the structure of the surrounding query.</issueBackground>
+    <remediationBackground>The most effective way to prevent SQL injection attacks is to use parameterized queries (also known as prepared statements) for all database access. This method uses two steps to incorporate potentially tainted data into SQL queries: first, the application specifies the structure of the query, leaving placeholders for each item of user input; second, the application specifies the contents of each placeholder.</remediationBackground>
+    <issueDetail>The application appears to be vulnerable to SQL injection. The payload 1' OR '1'='1 was submitted in the username parameter, and the application's response indicates that a database error occurred.</issueDetail>
+    <remediationDetail>Use parameterized queries for all database access. Avoid concatenating user input directly into SQL queries.</remediationDetail>
+  </issue>
+
+  <issue>
+    <serialNumber>5234857234857236</serialNumber>
+    <type>2097408</type>
+    <name>Cross-site request forgery (CSRF)</name>
+    <host>http://192.168.236.142</host>
+    <path>/admin/delete_user.php</path>
+    <location>POST request to /admin/delete_user.php</location>
+    <severity>Medium</severity>
+    <confidence>Firm</confidence>
+    <issueBackground>Cross-site request forgery (CSRF) vulnerabilities arise when a web application does not, or cannot, sufficiently verify whether a well-formed, valid, consistent request was intentionally provided by the user who submitted the request.</issueBackground>
+    <remediationBackground>The most robust way to defend against CSRF attacks is to include a CSRF token within relevant requests. The token should be unpredictable with high entropy, tied to the user's session, and strictly validated in every case before the relevant action is executed.</remediationBackground>
+    <issueDetail>The application does not appear to include any CSRF tokens within forms or validate that requests contain a valid token. An attacker may be able to induce a victim to carry out unintended actions within the application.</issueDetail>
+    <remediationDetail>Implement CSRF tokens for all state-changing operations. Include the token in forms as a hidden field and validate it server-side for every request.</remediationDetail>
+  </issue>
+
+  <issue>
+    <serialNumber>5234857234857237</serialNumber>
+    <type>524288</type>
+    <name>Password field with autocomplete enabled</name>
+    <host>http://192.168.236.142</host>
+    <path>/login.php</path>
+    <location>Form field 'password' in /login.php</location>
+    <severity>Low</severity>
+    <confidence>Certain</confidence>
+    <issueBackground>The application contains a form with a password field that has autocomplete enabled. This may allow sensitive data to be stored in the browser's autocomplete history.</issueBackground>
+    <remediationBackground>Password fields should have autocomplete disabled to prevent browsers from storing sensitive authentication data.</remediationBackground>
+    <issueDetail>The password field in the login form does not have autocomplete="off" specified, which may allow browsers to store the password value.</issueDetail>
+    <remediationDetail>Add autocomplete="off" to password input fields in forms.</remediationDetail>
+  </issue>
+
+  <issue>
+    <serialNumber>5234857234857238</serialNumber>
+    <type>6291456</type>
+    <name>Missing HTTP security headers</name>
+    <host>http://192.168.236.142</host>
+    <path>/</path>
+    <location>HTTP response headers</location>
+    <severity>Low</severity>
+    <confidence>Certain</confidence>
+    <issueBackground>The application does not employ several important HTTP security headers that can help protect against common attacks.</issueBackground>
+    <remediationBackground>Implement security headers such as Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, and Strict-Transport-Security where appropriate.</remediationBackground>
+    <issueDetail>The following security headers are missing: X-Frame-Options, X-Content-Type-Options, Content-Security-Policy, Strict-Transport-Security.</issueDetail>
+    <remediationDetail>Configure your web server to include appropriate security headers in all HTTP responses.</remediationDetail>
+  </issue>
+</issues>

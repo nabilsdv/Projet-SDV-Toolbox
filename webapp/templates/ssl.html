@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Vérificateur SSL</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #121212;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.6);
+        }
+        .result-box {
+            background-color: #d1f5e3;
+            color: #0f5132;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .error-box {
+            background-color: #f8d7da;
+            color: #842029;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            color: #664d03;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #00d4ff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-control {
+            text-align: center;
+        }
+        .detail-section {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .cert-detail {
+            margin-bottom: 15px;
+        }
+        .cert-label {
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .tag {
+            background-color: #343a40;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Vérificateur SSL</h1>
+
+        <form method="post" action="/sslcheck">
+            <div class="mb-3">
+                <label for="domain" class="form-label">Nom de domaine :</label>
+                <input type="text" class="form-control" id="domain" name="domain" placeholder="ex: google.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">🔍 Vérifier</button>
+        </form>
+
+        {% if error %}
+            <div class="{% if '✅' in error %}result-box{% elif '⚠' in error %}warning-box{% else %}error-box{% endif %} mt-4">
+                <strong>{{ error }}</strong>
+            </div>
+        {% endif %}
+
+        {% if results %}
+            <div class="detail-section">
+                <h4 class="mb-4">Informations du certificat</h4>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Domaine</div>
+                            <div>{{ results.domain }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Date d'expiration</div>
+                            <div>{{ results.expire_date }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Jours restants</div>
+                            <div>{{ results.remaining_days }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Émis par</div>
+                            <div>{{ results.issuer.O or results.issuer.CN }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Émis à</div>
+                            <div>{{ results.subject.CN }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Date d'émission</div>
+                            <div>{{ results.start_date }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Algorithme de signature</div>
+                            <div>{{ results.signature_algorithm }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Version</div>
+                            <div>{{ results.version }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Numéro de série</div>
+                            <div>{{ results.serial_number }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Est auto-signé</div>
+                            <div>{{ "Oui" if results.is_self_signed else "Non" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="cert-detail">
+                            <div class="cert-label">Est une CA</div>
+                            <div>{{ "Oui" if results.is_ca else "Non" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if results.san %}
+                    <div class="cert-detail mt-3">
+                        <div class="cert-label">Noms alternatifs du sujet (SAN)</div>
+                        <div class="tag-container">
+                            {% for name in results.san %}
+                                <span class="tag">{{ name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- NOUVEAU : Bouton PDF bien positionné -->
+            <div class="mt-4" style="margin-top: 30px !important;">
+                <div style="background: rgba(0, 123, 255, 0.15); border: 2px solid #007bff; border-radius: 12px; padding: 25px; text-align: center;">
+                    <h5 style="color: #00d4ff; margin-bottom: 15px; font-weight: bold;">📄 Rapport PDF</h5>
+                    <p style="color: #ccc; margin-bottom: 20px;">Générer un rapport PDF professionnel de cette vérification SSL/TLS</p>
+                    
+                    <form method="post" style="display: inline;">
+                        <input type="hidden" name="domain" value="{{ request.form.get('domain', '') }}">
+                        <input type="hidden" name="generate_pdf" value="1">
+                        
+                        <button type="submit" class="btn btn-lg" style="background: linear-gradient(45deg, #007bff, #00d4ff); border: none; color: white; padding: 12px 30px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                            📄 Télécharger le rapport PDF
+                        </button>
+                    </form>
+                    
+                    <small style="color: #999; display: block; margin-top: 15px; font-size: 0.85em;">
+                        Le rapport PDF contiendra toutes les informations du certificat avec des recommandations de sécurité.
+                    </small>
+                </div>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <div class="text-center mt-4">
+        <a href="/" class="btn btn-outline-info px-4 py-2 rounded-pill" style="box-shadow: 0 0 8px rgba(0, 183, 255, 0.5); font-weight: bold;">
+            ⬅ Retour au menu
+        </a>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,4 @@
+# Nmap 7.94SVN scan initiated Thu Jun  5 23:45:38 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250605234538.txt google.com
+Failed to resolve "google.com".
+WARNING: No targets were specified, so 0 hosts scanned.
+# Nmap done at Thu Jun  5 23:45:58 2025 -- 0 IP addresses (0 hosts up) scanned in 20.11 seconds

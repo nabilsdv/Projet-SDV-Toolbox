@@ -1,0 +1,11 @@
+# Nmap 7.94SVN scan initiated Tue May 20 12:59:53 2025 as: /usr/lib/nmap/nmap -sV --script http-title -oN uploads/nmap_nse_20250520125953.txt www.isrp.fr
+Nmap scan report for www.isrp.fr (95.128.40.112)
+Host is up (0.0015s latency).
+rDNS record for 95.128.40.112: isrp1.aquaray.com
+Not shown: 998 filtered tcp ports (no-response)
+PORT    STATE SERVICE    VERSION
+80/tcp  open  tcpwrapped
+443/tcp open  tcpwrapped
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Tue May 20 13:00:13 2025 -- 1 IP address (1 host up) scanned in 20.69 seconds
