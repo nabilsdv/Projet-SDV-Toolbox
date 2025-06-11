@@ -2,7 +2,7 @@
 
 ## Présentation
 
-**SDV Toolbox (Security Development & Validation)** est une suite d'outils de sécurité offensive et défensive regroupés sous une interface centralisée.  
+**La SDV Toolbox** est une suite d'outils de sécurité offensive et défensive regroupés sous une interface centralisée.  
 Elle permet d'accéder facilement à une large panoplie d'outils de pentest, d'analyse réseau, de tests d'intrusion applicatifs et d'audit d'infrastructure.
 
 L'objectif de ce projet est de faciliter l'automatisation et l'orchestration de nombreux outils de sécurité tout en offrant une interface propre, ergonomique et pédagogique.
