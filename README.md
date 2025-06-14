@@ -97,4 +97,6 @@ L'application regroupe les outils sous plusieurs catégories :
 ```bash
 git clone https://github.com/nabilsdv/Projet-SDV-Toolbox.git
 cd Projet-SDV-Toolbox
-python3 webapp/app.py
+sudo pip3 install reportlab --break-system-packages
+cd webapp
+sudo python3 app.py
